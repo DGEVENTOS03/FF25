@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<title>Búsqueda de Participantes</title>
+  <meta charset="UTF-8" />
+  <title>Búsqueda de Participantes</title>
+  <style>
+    mark {
+      background-color: yellow;
+    }
+  </style>
 </head>
 <body>
 
-<input type="text" id="nombre" placeholder="Nombre" />
-<input type="text" id="apellidos" placeholder="Apellidos" />
+<h3>Buscar participante:</h3>
+<input type="text" id="busqueda" placeholder="Nombre y/o Apellidos" />
 <button id="buscarBtn">Buscar</button>
 
 <div id="resultado"></div>
+
 
 <script>
   // Datos embebidos directamente
@@ -5411,32 +5417,35 @@
       .trim();
   }
 
-  function normalizar(texto) {
-    return texto
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // quita tildes
-      .replace(/\s+/g, " ") // reemplaza múltiples espacios por uno solo
-      .trim();
+  function resaltarCoincidencia(texto, palabras) {
+    palabras.forEach(palabra => {
+      const regex = new RegExp(`(${palabra})`, 'gi');
+      texto = texto.replace(regex, '<mark>$1</mark>');
+    });
+    return texto;
   }
 
   function buscarParticipante() {
-    const nombre = normalizar(document.getElementById('nombre').value);
-    const apellidos = normalizar(document.getElementById('apellidos').value);
-
-    const resultados = datos.filter(p =>
-      (nombre && normalizar(p.Nombre).includes(nombre)) ||
-      (apellidos && normalizar(p.Apellidos).includes(apellidos))
-    );
+    const entrada = normalizar(document.getElementById('busqueda').value);
+    const palabras = entrada.split(" ").filter(p => p.length > 0);
 
     const contenedor = document.getElementById('resultado');
     let html = '';
+
+    const resultados = datos.filter(p => {
+      const nombreApellidos = normalizar(`${p.Nombre} ${p.Apellidos}`);
+      return palabras.every(palabra => nombreApellidos.includes(palabra));
+    });
 
     if (resultados.length > 0) {
       resultados.forEach(resultado => {
         html += '<table border="1" cellspacing="0" cellpadding="4">';
         for (let campo in resultado) {
-          html += `<tr><th>${campo}</th><td>${resultado[campo]}</td></tr>`;
+          let valor = resultado[campo];
+          if (typeof valor === "string" && valor.trim() !== "") {
+            valor = resaltarCoincidencia(valor, palabras);
+          }
+          html += `<tr><th>${campo}</th><td>${valor}</td></tr>`;
         }
         html += '</table><br>';
       });
