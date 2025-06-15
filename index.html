@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Búsqueda por Nombre y Apellido</title>
+  <title>Búsqueda Nombre + Apellidos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,16 +31,16 @@
 </head>
 <body>
 
-<h3>Buscar participante:</h3>
+<h3>Buscar participante (nombre y apellidos):</h3>
 
-<input type="text" id="nombre" placeholder="Nombre" />
-<input type="text" id="apellido" placeholder="Apellido" />
+<input type="text" id="busqueda" placeholder="Escribe nombre y/o apellidos" />
 <button id="buscarBtn">Buscar</button>
 <button id="limpiarBtn">Limpiar</button>
 
 <div id="lista" style="margin-top: 10px; max-height: 200px; overflow-y: auto;"></div>
 <hr />
 <div id="resultado"></div>
+
 
 
 <script>
@@ -5443,26 +5443,20 @@
   }
 
   function buscarCoincidencias() {
-    const nombreInput = normalizar(document.getElementById('nombre').value);
-    const apellidoInput = normalizar(document.getElementById('apellido').value);
-
+    const textoBusqueda = normalizar(document.getElementById('busqueda').value);
     const lista = document.getElementById('lista');
     const resultado = document.getElementById('resultado');
-
     lista.innerHTML = '';
     resultado.innerHTML = '';
 
-    if (!nombreInput && !apellidoInput) return;
+    if (!textoBusqueda) return;
+
+    const palabras = textoBusqueda.split(' ').filter(p => p.length > 0);
 
     const coincidencias = datos.filter(p => {
-      const nombre = normalizar(p.Nombre);
-      const apellido = normalizar(p.Apellidos);
-
-      // Buscar que contenga el texto de nombre y apellido (si están)
-      const nombreOk = nombreInput ? nombre.includes(nombreInput) : true;
-      const apellidoOk = apellidoInput ? apellido.includes(apellidoInput) : true;
-
-      return nombreOk && apellidoOk;
+      const completo = normalizar(p.Nombre + ' ' + p.Apellidos);
+      // todas las palabras deben estar incluidas
+      return palabras.every(palabra => completo.includes(palabra));
     });
 
     if (coincidencias.length === 0) {
@@ -5475,6 +5469,7 @@
         div.onclick = () => {
           mostrarDatos(persona);
           lista.innerHTML = '';
+          document.getElementById('busqueda').value = `${persona.Nombre} ${persona.Apellidos}`;
         };
         lista.appendChild(div);
       });
@@ -5491,8 +5486,7 @@
   }
 
   function limpiarTodo() {
-    document.getElementById('nombre').value = '';
-    document.getElementById('apellido').value = '';
+    document.getElementById('busqueda').value = '';
     document.getElementById('lista').innerHTML = '';
     document.getElementById('resultado').innerHTML = '';
   }
@@ -5500,9 +5494,9 @@
   document.getElementById('buscarBtn').addEventListener('click', buscarCoincidencias);
   document.getElementById('limpiarBtn').addEventListener('click', limpiarTodo);
 
-  // Opcional: Buscar mientras escribes
-  document.getElementById('nombre').addEventListener('input', buscarCoincidencias);
-  document.getElementById('apellido').addEventListener('input', buscarCoincidencias);
+  // Búsqueda dinámica mientras escribes
+  document.getElementById('busqueda').addEventListener('input', buscarCoincidencias);
+
 </script>
 
 </body>
