@@ -1,11 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Búsqueda de Participantes</title>
   <style>
-    mark {
-      background-color: yellow;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #lista div {
+      cursor: pointer;
+      padding: 5px;
+      border-bottom: 1px solid #ddd;
+    }
+    #lista div:hover {
+      background-color: #f0f0f0;
+    }
+    table {
+      margin-top: 15px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 5px 10px;
+      border: 1px solid #999;
+    }
+    button {
+      margin-left: 10px;
     }
   </style>
 </head>
@@ -14,9 +34,11 @@
 <h3>Buscar participante:</h3>
 <input type="text" id="busqueda" placeholder="Nombre y/o Apellidos" />
 <button id="buscarBtn">Buscar</button>
+<button id="limpiarBtn">Limpiar</button>
 
+<div id="lista" style="margin-top: 10px; max-height: 200px; overflow-y: auto;"></div>
+<hr>
 <div id="resultado"></div>
-
 
 <script>
   // Datos embebidos directamente
@@ -5417,46 +5439,63 @@
       .trim();
   }
 
-  function resaltarCoincidencia(texto, palabras) {
-    palabras.forEach(palabra => {
-      const regex = new RegExp(`(${palabra})`, 'gi');
-      texto = texto.replace(regex, '<mark>$1</mark>');
-    });
-    return texto;
+nction normalizar(texto) {
+    return texto
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
-  function buscarParticipante() {
+  function buscarCoincidencias() {
     const entrada = normalizar(document.getElementById('busqueda').value);
     const palabras = entrada.split(" ").filter(p => p.length > 0);
+    const lista = document.getElementById('lista');
+    lista.innerHTML = '';
+    document.getElementById('resultado').innerHTML = '';
 
-    const contenedor = document.getElementById('resultado');
-    let html = '';
+    if (entrada === '') return;
 
-    const resultados = datos.filter(p => {
-      const nombreApellidos = normalizar(`${p.Nombre} ${p.Apellidos}`);
-      return palabras.every(palabra => nombreApellidos.includes(palabra));
+    const coincidencias = datos.filter(p => {
+      const completo = normalizar(`${p.Nombre} ${p.Apellidos}`);
+      return palabras.every(palabra => completo.includes(palabra));
     });
 
-    if (resultados.length > 0) {
-      resultados.forEach(resultado => {
-        html += '<table border="1" cellspacing="0" cellpadding="4">';
-        for (let campo in resultado) {
-          let valor = resultado[campo];
-          if (typeof valor === "string" && valor.trim() !== "") {
-            valor = resaltarCoincidencia(valor, palabras);
-          }
-          html += `<tr><th>${campo}</th><td>${valor}</td></tr>`;
-        }
-        html += '</table><br>';
+    if (coincidencias.length > 0) {
+      coincidencias.forEach((p, index) => {
+        const item = document.createElement('div');
+        item.textContent = `${p.Nombre} ${p.Apellidos}`;
+        item.addEventListener('click', () => {
+          mostrarDatos(p);
+          lista.innerHTML = '';
+          document.getElementById('busqueda').value = `${p.Nombre} ${p.Apellidos}`;
+        });
+        lista.appendChild(item);
       });
     } else {
-      html = '<p>No se encontró al participante.</p>';
+      lista.innerHTML = '<div>No hay coincidencias</div>';
     }
-
-    contenedor.innerHTML = html;
   }
 
-  document.getElementById('buscarBtn').addEventListener('click', buscarParticipante);
+  function mostrarDatos(persona) {
+    let html = '<table>';
+    for (let campo in persona) {
+      html += `<tr><th>${campo}</th><td>${persona[campo]}</td></tr>`;
+    }
+    html += '</table>';
+    document.getElementById('resultado').innerHTML = html;
+  }
+
+  function limpiarTodo() {
+    document.getElementById('busqueda').value = '';
+    document.getElementById('lista').innerHTML = '';
+    document.getElementById('resultado').innerHTML = '';
+  }
+
+  document.getElementById('buscarBtn').addEventListener('click', buscarCoincidencias);
+  document.getElementById('limpiarBtn').addEventListener('click', limpiarTodo);
+  document.getElementById('busqueda').addEventListener('input', buscarCoincidencias);
 </script>
 
 </body>
