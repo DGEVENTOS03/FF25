@@ -1,18 +1,17 @@
-<!DOCTYPE html>
+CTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Búsqueda</title>
+<meta charset="UTF-8" />
+<title>Búsqueda de Participantes</title>
 </head>
 <body>
 
-<h3>Buscar participante:</h3>
-<input type="text" id="busqueda" placeholder="Nombre y/o Apellidos" />
-<button onclick="buscarCoincidencias()">Buscar</button>
-<button onclick="limpiarTodo()">Limpiar</button>
+<input type="text" id="nombre" placeholder="Nombre" />
+<input type="text" id="apellidos" placeholder="Apellidos" />
+<button id="buscarBtn">Buscar</button>
 
-<div id="lista" style="margin-top: 10px;"></div>
-<div id="resultado" style="margin-top: 20px;"></div>
+<div id="resultado"></div>
+
 <script>
   // Datos embebidos directamente
   let datos = [
@@ -5403,72 +5402,43 @@
     }
   ];
 
- function normalizar(texto) {
+  function normalizar(texto) {
     return texto
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "") // quita tildes
-      .replace(/\s+/g, " ") // quita múltiples espacios
+      .replace(/\s+/g, " ") // reemplaza múltiples espacios por uno solo
       .trim();
   }
 
-nction normalizar(texto) {
-    return texto
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
+  function buscarParticipante() {
+    const nombre = normalizar(document.getElementById('nombre').value);
+    const apellidos = normalizar(document.getElementById('apellidos').value);
 
- function normalizar(texto) {
-    return texto.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
+    const resultados = datos.filter(p =>
+      (nombre && normalizar(p.Nombre).includes(nombre)) ||
+      (apellidos && normalizar(p.Apellidos).includes(apellidos))
+    );
 
-  function buscarCoincidencias() {
-    const entrada = normalizar(document.getElementById('busqueda').value);
-    const lista = document.getElementById('lista');
-    const resultado = document.getElementById('resultado');
-    lista.innerHTML = '';
-    resultado.innerHTML = '';
+    const contenedor = document.getElementById('resultado');
+    let html = '';
 
-    if (!entrada) return;
-
-    const coincidencias = datos.filter(p => {
-      const completo = normalizar(`${p.Nombre} ${p.Apellidos}`);
-      return completo.includes(entrada);
-    });
-
-    if (coincidencias.length === 0) {
-      lista.innerHTML = '<div>No hay coincidencias</div>';
-    } else {
-      coincidencias.forEach(persona => {
-        const div = document.createElement('div');
-        div.textContent = `${persona.Nombre} ${persona.Apellidos}`;
-        div.style.cursor = 'pointer';
-        div.onclick = () => {
-          let html = '<table border="1">';
-          for (let campo in persona) {
-            html += `<tr><th>${campo}</th><td>${persona[campo]}</td></tr>`;
-          }
-          html += '</table>';
-          resultado.innerHTML = html;
-          lista.innerHTML = '';
-        };
-        lista.appendChild(div);
+    if (resultados.length > 0) {
+      resultados.forEach(resultado => {
+        html += '<table border="1" cellspacing="0" cellpadding="4">';
+        for (let campo in resultado) {
+          html += `<tr><th>${campo}</th><td>${resultado[campo]}</td></tr>`;
+        }
+        html += '</table><br>';
       });
+    } else {
+      html = '<p>No se encontró al participante.</p>';
     }
+
+    contenedor.innerHTML = html;
   }
 
-  function limpiarTodo() {
-    document.getElementById('busqueda').value = '';
-    document.getElementById('lista').innerHTML = '';
-    document.getElementById('resultado').innerHTML = '';
-  }
+  document.getElementById('buscarBtn').addEventListener('click', buscarParticipante);
 </script>
 
 </body>
